@@ -15,4 +15,4 @@ She creates the post and checks that it does show up on the top of the MatchBoar
 
 
 ### Screen recording of walkthrough:
-[Screen recording of user journey walkthrough](assets/final-user-journey.mov)
+[Screen recording of user journey walkthrough (You likely need to "view raw" and download the .mov file](assets/final-user-journey.mov)
