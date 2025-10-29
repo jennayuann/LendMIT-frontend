@@ -1,5 +1,12 @@
 # LendMIT-frontend
 
+## Note:
+For testing purposes, feel free to use the following login to the application (same one created in user journey walkthrough video):
+
+- Email: jenna@mit.edu
+- Password: jenna
+
+
 ## Visual Design
 [Visual Design 1: Typography](assets/typography.png)
 
