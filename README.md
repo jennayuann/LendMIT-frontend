@@ -1,5 +1,10 @@
 # LendMIT-frontend
 
+## To Run:
+```
+npm run dev
+```
+
 ## Note:
 For testing purposes, feel free to use the following login to the application (same one created in user journey walkthrough video):
 
@@ -8,9 +13,9 @@ For testing purposes, feel free to use the following login to the application (s
 
 
 ## Visual Design
-[Visual Design 1: Typography](assets/typography.png)
+[Visual Design 1: Typography](assets/typography-design.png)
 
-[Visual Design 2: Color](assets/color_palette.png)
+[Visual Design 2: Color](assets/color-design.png)
 
 ## User Journey
 Jenna wants to bake some banana bread for her boyfriend's birthday that is coming up, but she doesn't have a banana bread pan to bake it in. She doesn't want to spend money on something that she may only use once since she isn't a baker, so she tries out LendMIT. She first creates an account, verifies her MIT email, and successfully lands on the MatchBoard page. After searching through the current posts, she only finds one titled "Variety of Baking Supplies" that may be relevant. Since it's so vague, she contacts the lender for more information by clicking into the post and clicking the "Contact to borrow" button which takes her directly to Outlook with a template email that Jenna customizes.
