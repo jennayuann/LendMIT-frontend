@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import './styles/base.css'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import { router } from './router'
@@ -8,8 +9,11 @@ const app = createApp(App)
 
 app.use(createPinia())
 
+// Initialize auth state from localStorage
+const auth = useAuthStore()
+auth.init()
+
 router.beforeEach((to) => {
-  const auth = useAuthStore()
   if (to.meta?.requiresAuth && !auth.user) {
     return { path: '/login' }
   }

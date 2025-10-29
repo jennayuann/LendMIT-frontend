@@ -38,21 +38,21 @@ async function removeSub(id: string) {
   <NotificationsDrawer :open="showDrawer" @close="showDrawer = false" />
   <main class="wrap">
     <h2>Subscriptions</h2>
-    <p v-if="!auth.user" class="error">Please log in to manage your subscriptions.</p>
-    <p v-if="subs.info" class="info">{{ subs.info }}</p>
-    <p v-if="subs.error" class="error">{{ subs.error }}</p>
+    <p v-if="!auth.user" class="text-error">Please log in to manage your subscriptions.</p>
+    <p v-if="subs.info" style="color: var(--color-accent-2)">{{ subs.info }}</p>
+    <p v-if="subs.error" class="text-error">{{ subs.error }}</p>
 
     <section class="add">
-      <label class="select-label">
-        Category
+      <label class="select-label">Category</label>
+      <div class="select-btn-row">
         <select v-model="selectedCategory">
           <option value="" disabled>Select a category…</option>
           <option v-for="c in CATEGORIES" :key="c" :value="c">{{ c }}</option>
         </select>
-      </label>
-      <button class="primary" :disabled="subs.loading || !selectedCategory" @click="addSub">
-        {{ subs.loading ? 'Adding…' : 'Subscribe' }}
-      </button>
+        <button class="primary" :disabled="subs.loading || !selectedCategory" @click="addSub">
+          {{ subs.loading ? 'Adding…' : 'Subscribe' }}
+        </button>
+      </div>
     </section>
 
     <section>
@@ -65,7 +65,7 @@ async function removeSub(id: string) {
           </button>
         </li>
       </ul>
-      <p v-if="!subs.followees.length && !subs.loading" style="color: #666">
+      <p v-if="!subs.followees.length && !subs.loading" style="color: var(--color-text-secondary)">
         No subscriptions yet.
       </p>
     </section>
@@ -74,46 +74,83 @@ async function removeSub(id: string) {
 
 <style scoped>
 .wrap {
-  padding: 1rem;
+  padding: 1.25rem;
+  max-width: 1000px;
+  margin: 0 auto;
 }
+/* Use grid for label, flex for controls */
 .add {
+  display: grid;
+  gap: 0.25rem;
+  margin: 1.5rem 0 1.25rem;
+}
+.select-btn-row {
   display: flex;
   gap: 0.5rem;
-  margin: 0.5rem 0 1rem;
-}
-input {
-  flex: 1;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid #e1e1ea;
-  border-radius: 8px;
+  align-items: stretch; /* ensure both controls share height */
 }
 select {
   flex: 1;
   padding: 0.6rem 0.75rem;
-  border: 1px solid #e1e1ea;
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2);
   background: white;
+  font-size: 1rem;
+  line-height: 1.35;
+  height: 2.75rem;
+  box-sizing: border-box;
+}
+
+/* Modernized select styling */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='10' viewBox='0 0 14 10' fill='none'><path d='M1 1l6 6 6-6' stroke='%23626A9A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 2.6rem; /* room for arrow */
+  border-radius: 10px;
+  border: 1px solid rgba(16, 24, 40, 0.08);
+  box-shadow: 0 1px 6px rgba(16, 24, 40, 0.04);
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.12s ease,
+    transform 0.08s ease;
+}
+select:hover {
+  box-shadow: 0 4px 18px rgba(16, 24, 40, 0.06);
+}
+select:focus {
+  outline: none;
+  border-color: var(--color-accent-2);
+  box-shadow: 0 6px 20px rgba(62, 0, 107, 0.12);
+}
+select option {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.98rem;
 }
 .select-label {
-  display: grid;
-  gap: 0.25rem;
-  flex: 1;
-}
-.primary {
-  background: #2a7dfb;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
+  font-weight: 700;
+  line-height: 1.2;
 }
 .danger {
   background: white;
-  border: 1px solid #e8c1c1;
-  color: #a33;
-  border-radius: 8px;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  color: var(--color-error);
+  border-radius: var(--radius-2);
   padding: 0.3rem 0.6rem;
   cursor: pointer;
+}
+.add button.primary {
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.75rem; /* match select height */
 }
 .list {
   display: grid;
@@ -125,17 +162,11 @@ select {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid #eee;
+  border: 1px solid var(--color-border);
   padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-2);
 }
 .mono {
   font-family: ui-monospace, Menlo, monospace;
-}
-.info {
-  color: #385898;
-}
-.error {
-  color: #b00020;
 }
 </style>

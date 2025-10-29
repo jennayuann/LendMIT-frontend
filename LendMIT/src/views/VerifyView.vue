@@ -59,22 +59,33 @@ async function resend() {
 <template>
   <div class="page">
     <div class="card">
-      <h1>Verify your email</h1>
-      <p>Enter the verification code we sent to your email.</p>
-      <p v-if="info" class="info">{{ info }}</p>
-      <p v-if="error" class="error">{{ error }}</p>
+      <div class="brand-header">
+        <h1 class="brand">LendMIT</h1>
+        <p class="subtitle">Verify your email</p>
+      </div>
+      <p class="instructions">Enter the verification code we sent to your email.</p>
+      <p v-if="info" class="info-msg">{{ info }}</p>
+      <p v-if="error" class="text-error">{{ error }}</p>
       <form @submit="onVerify">
         <label>
-          Verification code
-          <input type="text" v-model="code" required autocomplete="one-time-code" />
+          <span class="label-text">Verification code</span>
+          <input
+            type="text"
+            v-model="code"
+            required
+            autocomplete="one-time-code"
+            placeholder="Enter 6-digit code"
+          />
         </label>
-        <button type="submit" :disabled="loading || !userId">
+        <button type="submit" class="primary full-width" :disabled="loading || !userId">
           {{ loading ? 'Verifying…' : 'Verify' }}
         </button>
       </form>
       <div class="help">
         <span>Didn't get a code?</span>
-        <button type="button" class="link" :disabled="loading" @click="resend">Resend code</button>
+        <button type="button" class="link-btn" :disabled="loading" @click="resend">
+          Resend code
+        </button>
       </div>
     </div>
   </div>
@@ -85,51 +96,108 @@ async function resend() {
   min-height: 100dvh;
   display: grid;
   place-items: center;
-  background: #f7f7fb;
+  background: linear-gradient(135deg, var(--color-bg) 0%, #e8ebf0 100%);
+  padding: 1rem;
 }
 .card {
-  width: min(640px, 94vw);
+  width: min(440px, 94vw);
   background: #fff;
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 2.5rem 2rem;
+  border-radius: var(--radius-4);
+  box-shadow: var(--shadow-2);
+  border: 1px solid var(--color-border);
+}
+.brand-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.brand {
+  font-family: 'Neue Haas Grotesk Display', var(--font-sans);
+  margin: 0 0 0.25rem;
+  font-size: 2.25rem;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+  background: linear-gradient(135deg, var(--color-accent-1) 0%, var(--color-accent-2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.subtitle {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+.instructions {
+  color: var(--color-text-secondary);
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.info-msg {
+  color: var(--color-accent-2);
+  background: rgba(62, 0, 107, 0.05);
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-2);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+form {
+  display: grid;
+  gap: 1rem;
+}
+/* Constrain and center the form so the verification input aligns under the brand */
+form {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
 }
 label {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.35rem;
+}
+.label-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 input {
-  padding: 0.6rem 0.75rem;
-  border: 1px solid #d6d6e0;
-  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
+  text-align: center;
+  letter-spacing: 0.5px;
 }
-button {
+.full-width {
+  width: 100%;
   margin-top: 0.5rem;
-  padding: 0.6rem 0.8rem;
-  border-radius: 8px;
-  border: none;
-  background: #2a7dfb;
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
+}
+.primary {
+  /* Slightly larger, touch-friendly primary button for auth pages */
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  min-height: 48px;
+  border-radius: var(--radius-4);
 }
 .help {
-  margin-top: 0.75rem;
+  margin-top: 1.5rem;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
 }
-.link {
+.link-btn {
   background: transparent;
-  color: #2a7dfb;
+  color: var(--color-accent-2);
   border: none;
   padding: 0;
   cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
 }
-.error {
-  color: #b00020;
-}
-.info {
-  color: #385898;
+.link-btn:hover:not(:disabled) {
+  color: var(--color-accent-1);
 }
 </style>

@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   open: boolean
   title?: string
+  maxWidth?: string | number
 }>()
 const emit = defineEmits<{ (e: 'close'): void }>()
+
+const modalStyle = computed(() => {
+  if (!props.maxWidth) return { width: 'min(720px, 94vw)' }
+  if (typeof props.maxWidth === 'number') {
+    return { width: `min(${props.maxWidth}px, 94vw)` }
+  }
+  return { width: props.maxWidth }
+})
 
 function onEsc(e: KeyboardEvent) {
   if (e.key === 'Escape') emit('close')
@@ -16,7 +25,7 @@ onUnmounted(() => window.removeEventListener('keydown', onEsc))
 
 <template>
   <div v-if="open" class="overlay" @click.self="emit('close')">
-    <div class="modal">
+    <div class="modal" :style="modalStyle">
       <header class="header">
         <h3>{{ title }}</h3>
         <button class="icon" @click="emit('close')">✕</button>
@@ -38,7 +47,6 @@ onUnmounted(() => window.removeEventListener('keydown', onEsc))
   z-index: 50;
 }
 .modal {
-  width: min(720px, 94vw);
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);

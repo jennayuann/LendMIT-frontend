@@ -64,7 +64,7 @@ onMounted(async () => {
 .drawer {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.44);
   display: flex;
   justify-content: flex-end;
   z-index: 60;
@@ -72,7 +72,9 @@ onMounted(async () => {
 .panel {
   width: min(420px, 90vw);
   height: 100%;
-  background: #fff;
+  background: var(--color-popup);
+  color: var(--color-text-primary);
+  border-left: 1px solid var(--color-border);
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
@@ -81,15 +83,41 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #eee;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.head h3 {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  font-size: 1.25rem;
 }
 .spacer {
   flex: 1;
 }
 .content {
-  padding: 1rem;
+  padding: 0.75rem;
   overflow: auto;
+}
+.content h4 {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+}
+ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+li {
+  padding: 0.25rem 0;
+  font-weight: 500;
+}
+button {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2);
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
 }
 ul {
   padding-left: 1rem;

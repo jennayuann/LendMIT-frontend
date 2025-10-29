@@ -14,12 +14,16 @@ type Res = {
   name: string
   category: string | null
   description: string | null
+  intent?: string | null
+  from?: string | null
+  until?: string | null
 }
 const items = ref<Res[]>([])
 const open = ref(false)
 const editing = ref<Partial<Res> | null>(null)
 const showDrawer = ref(false)
 const loading = ref(false)
+const initialLoaded = ref(false)
 const error = ref<string | null>(null)
 
 async function fetchResourcesByIds(ids: string[]): Promise<Res[]> {
@@ -43,8 +47,10 @@ async function fetchResourcesByIds(ids: string[]): Promise<Res[]> {
             r.user ||
             null
           if (!ownerId || typeof ownerId !== 'string') return null
+          // Ensure id is always a string, not an object
+          const idStr = typeof r.id === 'string' ? r.id : String(r.id)
           return {
-            id: r.id as string,
+            id: idStr,
             owner: ownerId as string,
             name: r.name as string,
             category: (r.category ?? null) as string | null,
@@ -82,8 +88,10 @@ async function tryListByOwner(ownerId: string): Promise<Res[] | null> {
               r.user ||
               null
             if (!oid || typeof oid !== 'string') return null
+            // Ensure id is always a string, not an object
+            const idStr = typeof r.id === 'string' ? r.id : String(r.id)
             return {
-              id: r.id as string,
+              id: idStr,
               owner: oid as string,
               name: r.name as string,
               category: (r.category ?? null) as string | null,
@@ -110,8 +118,10 @@ async function tryListByOwner(ownerId: string): Promise<Res[] | null> {
               r.user ||
               null
             if (!oid || typeof oid !== 'string') return null
+            // Ensure id is always a string, not an object
+            const idStr = typeof r.id === 'string' ? r.id : String(r.id)
             return {
-              id: r.id as string,
+              id: idStr,
               owner: oid as string,
               name: r.name as string,
               category: (r.category ?? null) as string | null,
@@ -153,8 +163,10 @@ async function tryListAllAndFilter(ownerId: string): Promise<Res[] | null> {
               r.user ||
               null
             if (!oid || typeof oid !== 'string') return null
+            // Ensure id is always a string, not an object
+            const idStr = typeof r.id === 'string' ? r.id : String(r.id)
             return {
-              id: r.id as string,
+              id: idStr,
               owner: oid as string,
               name: r.name as string,
               category: (r.category ?? null) as string | null,
@@ -183,8 +195,10 @@ async function tryListAllAndFilter(ownerId: string): Promise<Res[] | null> {
               r.user ||
               null
             if (!oid || typeof oid !== 'string') return null
+            // Ensure id is always a string, not an object
+            const idStr = typeof r.id === 'string' ? r.id : String(r.id)
             return {
-              id: r.id as string,
+              id: idStr,
               owner: oid as string,
               name: r.name as string,
               category: (r.category ?? null) as string | null,
@@ -199,9 +213,9 @@ async function tryListAllAndFilter(ownerId: string): Promise<Res[] | null> {
   return null
 }
 
-async function load() {
+async function load(showSpinner = true) {
   if (!auth.user) return
-  loading.value = true
+  if (showSpinner && !initialLoaded.value) loading.value = true
   error.value = null
   try {
     let result: Res[] = []
@@ -222,13 +236,24 @@ async function load() {
           if (Array.isArray(resp.data) && resp.data.length) intents = resp.data as string[]
           else if (Array.isArray(resp.data?.intentNames))
             intents = resp.data.intentNames as string[]
-        } catch (_) {}
+        } catch (_) {
+          try {
+            const resp2 = await api.post('/ResourceIntentConcept/listIntents', {})
+            if (Array.isArray(resp2.data) && resp2.data.length) intents = resp2.data as string[]
+            else if (Array.isArray(resp2.data?.intentNames))
+              intents = resp2.data.intentNames as string[]
+          } catch (_) {}
+        }
         if (!intents.length) intents = ['LEND', 'BORROW']
         // Ensure defaults exist server-side so setIntent/listResourcesByIntent work
         for (const def of ['LEND', 'BORROW']) {
           if (!intents.includes(def)) {
             try {
-              await api.post('/ResourceIntent/defineIntent', { intentName: def })
+              try {
+                await api.post('/ResourceIntent/defineIntent', { intentName: def })
+              } catch (_) {
+                await api.post('/ResourceIntentConcept/defineIntent', { intentName: def })
+              }
               intents.push(def)
             } catch (_) {}
           }
@@ -236,9 +261,17 @@ async function load() {
         const idSets = await Promise.all(
           intents.map(async (it) => {
             try {
-              const r = await api.post('/ResourceIntent/listResourcesByIntent', { intent: it })
-              if (Array.isArray(r.data)) return r.data as string[]
-              if (Array.isArray(r.data?.resourceIDs)) return r.data.resourceIDs as string[]
+              try {
+                const r = await api.post('/ResourceIntent/listResourcesByIntent', { intent: it })
+                if (Array.isArray(r.data)) return r.data as string[]
+                if (Array.isArray(r.data?.resourceIDs)) return r.data.resourceIDs as string[]
+              } catch (_) {
+                const r2 = await api.post('/ResourceIntentConcept/listResourcesByIntent', {
+                  intent: it,
+                })
+                if (Array.isArray(r2.data)) return r2.data as string[]
+                if (Array.isArray(r2.data?.resourceIDs)) return r2.data.resourceIDs as string[]
+              }
             } catch (_) {}
             return [] as string[]
           }),
@@ -248,8 +281,11 @@ async function load() {
         result = resources.filter((r) => r.owner === auth.user!.id)
       }
     }
+    // Attach intents and time windows
+    const withIntents = await attachIntents(result)
+    const enriched = await attachTimeWindows(withIntents)
     // Use only server-provided results (no local cache)
-    items.value = (result || []).sort(
+    items.value = (enriched || []).sort(
       (a, b) => deriveEpochMsFromId(b.id) - deriveEpochMsFromId(a.id),
     )
   } catch (e: any) {
@@ -257,6 +293,7 @@ async function load() {
     items.value = []
   } finally {
     loading.value = false
+    initialLoaded.value = true
   }
 }
 
@@ -270,7 +307,33 @@ function editPost(p: Res) {
 }
 async function delPost(p: Res) {
   try {
-    await api.post('/Resource/deleteResource', { resourceID: p.id })
+    // Extract string ID: handle both plain strings and branded ID objects
+    let resourceID = p.id
+    if (typeof resourceID !== 'string') {
+      console.warn('ID is not a string, attempting to convert:', resourceID)
+      resourceID = String(resourceID)
+    }
+
+    // 1. Clear intent entry (ignore errors if intent doesn't exist)
+    try {
+      await api.post('/ResourceIntent/clearIntent', { resource: resourceID })
+    } catch (e) {
+      console.debug('Could not clear intent (may not exist):', e)
+    }
+
+    // 1.5 Delete associated TimeBoundedResource entry (API spec)
+    try {
+      try {
+        await api.post('/TimeBoundedResource/deleteTimeWindow', { resource: resourceID })
+      } catch (_) {
+        await api.post('/TimeBoundedResourceConcept/deleteTimeWindow', { resource: resourceID })
+      }
+    } catch (e) {
+      console.debug('Could not delete time window (may not exist):', e)
+    }
+
+    // 2. Delete resource entry
+    await api.post('/Resource/deleteResource', { resourceID: resourceID })
   } catch (e) {
     console.warn('Delete failed', e)
   } finally {
@@ -284,11 +347,18 @@ function onSaved(r: Res) {
   const idx = items.value.findIndex((x) => x.id === r.id)
   if (idx >= 0) items.value[idx] = r
   else items.value.unshift(r)
+  // If modal provided intent, keep it; otherwise best-effort fetch
+  if (!r.intent) {
+    getIntentFor(r.id).then((it) => {
+      const i = items.value.findIndex((x) => x.id === r.id)
+      if (i >= 0) items.value[i] = { ...(items.value[i] as Res), intent: it } as Res
+    })
+  }
   items.value.sort((a, b) => deriveEpochMsFromId(b.id) - deriveEpochMsFromId(a.id))
   // If it's a temp item, wait for reconciliation; otherwise do a quick reload
   if (!isTempId(r.id)) {
     setTimeout(() => {
-      load()
+      load(false) // silent refresh; don't show Loading…
     }, 200)
   }
 }
@@ -301,11 +371,17 @@ function onReconciled(payload: { oldId: string; resource: Res }) {
     if (j >= 0) items.value[j] = payload.resource
     else items.value.unshift(payload.resource)
   }
+  if (!payload.resource.intent) {
+    getIntentFor(payload.resource.id).then((it) => {
+      const i = items.value.findIndex((x) => x.id === payload.resource.id)
+      if (i >= 0) items.value[i] = { ...(items.value[i] as Res), intent: it } as Res
+    })
+  }
   // De-dup and sort
   items.value = items.value.filter((v, i, arr) => arr.findIndex((w) => w.id === v.id) === i)
   items.value.sort((a, b) => deriveEpochMsFromId(b.id) - deriveEpochMsFromId(a.id))
   setTimeout(() => {
-    load()
+    load(false) // silent refresh
   }, 150)
 }
 
@@ -327,6 +403,110 @@ function deriveEpochMsFromId(id: string): number {
 function isTempId(id: string) {
   return id.startsWith('tmp_')
 }
+
+async function attachIntents(list: Res[]): Promise<Res[]> {
+  try {
+    const res = await Promise.all(
+      list.map(async (r) => ({ ...r, intent: await getIntentFor(r.id) })),
+    )
+    return res
+  } catch (_) {
+    return list
+  }
+}
+
+async function getIntentFor(resourceId: string): Promise<string | null> {
+  try {
+    let data: any
+    try {
+      const resp = await api.post('/ResourceIntent/getIntent', { resource: resourceId })
+      data = resp.data
+    } catch (_) {
+      const resp2 = await api.post('/ResourceIntentConcept/getIntent', { resource: resourceId })
+      data = resp2.data
+    }
+    if (Array.isArray(data) && data.length) {
+      const row = data[0]
+      if (row && typeof row.intent === 'string') return row.intent
+    }
+    if (data && typeof data === 'object') {
+      if (typeof data.intent === 'string') return data.intent
+      if (Array.isArray(data?.entries) && data.entries[0]?.intent)
+        return String(data.entries[0].intent)
+    }
+  } catch (_) {}
+  return 'N/A'
+}
+
+async function getTimeWindow(
+  resourceId: string,
+): Promise<{ from: string | null; until: string | null }> {
+  try {
+    let data: any
+    try {
+      const r = await api.post('/TimeBoundedResource/getTimeWindow', { resource: resourceId })
+      data = r.data
+    } catch (_) {
+      const r2 = await api.post('/TimeBoundedResourceConcept/getTimeWindow', {
+        resource: resourceId,
+      })
+      data = r2.data
+    }
+    let entry: any = null
+    if (Array.isArray(data) && data.length) entry = data[0]
+    else if (data && typeof data === 'object') entry = data
+    const af = entry?.availableFrom ?? entry?.from ?? null
+    const au = entry?.availableUntil ?? entry?.until ?? null
+    return {
+      from: typeof af === 'string' ? af : null,
+      until: typeof au === 'string' ? au : null,
+    }
+  } catch (_) {
+    return { from: null, until: null }
+  }
+}
+
+function formatReadable(iso: string): string {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  return d.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+function formatTimeWindowText(from: string | null | undefined, until: string | null | undefined) {
+  const now = Date.now()
+  const fromMs = from ? new Date(from).getTime() : NaN
+  const untilMs = until ? new Date(until).getTime() : NaN
+  const hasFrom = from && !Number.isNaN(fromMs)
+  const hasUntil = until && !Number.isNaN(untilMs)
+
+  // If start is in the past, treat as no start and don't show its date/time
+  const effectiveHasFrom = hasFrom && fromMs > now
+
+  if (effectiveHasFrom && hasUntil) return `${formatReadable(from!)} – ${formatReadable(until!)}`
+  if (!effectiveHasFrom && hasUntil) return `Until ${formatReadable(until!)}`
+  if (effectiveHasFrom && !hasUntil) return `From ${formatReadable(from!)}`
+  return 'From now'
+}
+
+async function attachTimeWindows(list: Res[]): Promise<Res[]> {
+  try {
+    const res = await Promise.all(
+      list.map(async (r) => {
+        const tw = await getTimeWindow(r.id)
+        return { ...r, from: tw.from, until: tw.until }
+      }),
+    )
+    return res
+  } catch (_) {
+    return list
+  }
+}
 </script>
 
 <template>
@@ -338,13 +518,21 @@ function isTempId(id: string) {
       <button class="primary" @click="createNew">Create new posting</button>
     </div>
     <div class="list">
-      <p v-if="loading" style="color: #666; margin: 0.5rem 0">Loading…</p>
-      <p v-else-if="error" style="color: #c00; margin: 0.5rem 0">{{ error }}</p>
-      <p v-else-if="!items.length" style="color: #666; margin: 0.5rem 0">
-        You have no postings yet.
-      </p>
+      <div v-if="loading" class="loading">Loading your postings...</div>
+      <p v-else-if="error" class="text-error" style="margin: 0.5rem 0">{{ error }}</p>
+      <div v-else-if="!items.length" class="empty-state">
+        <p>You have no postings yet.</p>
+        <p style="font-size: 0.85rem">Click "Create new posting" to get started!</p>
+      </div>
       <div v-for="p in items" :key="p.id" class="row">
-        <PostCard :title="p.name" :owner="'me'" :description="p.description || ''" />
+        <PostCard
+          :title="p.name"
+          :owner="'me'"
+          :owner-id="p.owner"
+          :description="p.description || ''"
+          :intent="p.intent || null"
+          :time-window="formatTimeWindowText(p.from || null, p.until || null)"
+        />
         <div class="actions">
           <button @click="editPost(p)">Edit</button>
           <button @click="delPost(p)">Delete</button>
@@ -364,7 +552,9 @@ function isTempId(id: string) {
 
 <style scoped>
 .wrap {
-  padding: 1rem;
+  padding: 1.25rem;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 .toolbar {
   display: flex;
@@ -372,17 +562,9 @@ function isTempId(id: string) {
   align-items: center;
   margin-bottom: 1rem;
 }
-.primary {
-  background: #2a7dfb;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-}
 .list {
   display: grid;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 .row {
   display: grid;
@@ -393,12 +575,5 @@ function isTempId(id: string) {
 .actions {
   display: flex;
   gap: 0.5rem;
-}
-button {
-  border: 1px solid #ddd;
-  background: #fff;
-  border-radius: 8px;
-  padding: 0.4rem 0.6rem;
-  cursor: pointer;
 }
 </style>

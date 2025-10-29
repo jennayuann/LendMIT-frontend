@@ -16,6 +16,17 @@ export const useAuthStore = defineStore('auth', {
     info: null as string | null,
   }),
   actions: {
+    // Initialize user from localStorage on store creation
+    init() {
+      const stored = localStorage.getItem('auth_user')
+      if (stored) {
+        try {
+          this.user = JSON.parse(stored)
+        } catch {
+          localStorage.removeItem('auth_user')
+        }
+      }
+    },
     resetMessages() {
       this.error = null
       this.info = null
@@ -25,18 +36,49 @@ export const useAuthStore = defineStore('auth', {
       this.resetMessages()
       try {
         const res = await api.post('/UserAuthentication/login', { email, password })
-        const userId = res.data?.user as string
+        const data = res?.data || {}
+        const apiError: string | undefined = data?.error
+        if (apiError) {
+          // If backend signals unverified status in an error, convert to a friendly message
+          if (/status\s+is\s+UNVERIFIED|requires[^.]*VERIFIED/i.test(apiError)) {
+            this.error = 'Your account is not verified yet. Please verify your email to log in.'
+          } else if (/invalid\s+credentials/i.test(apiError)) {
+            this.error = 'Invalid credentials'
+          } else {
+            this.error = apiError
+          }
+          throw new Error(this.error)
+        }
+        const userId = (data?.user ?? '') as string
+        // Must have a concrete user id to treat as logged in
+        if (typeof userId !== 'string' || userId.trim().length === 0) {
+          this.error = 'Invalid credentials'
+          throw new Error(this.error)
+        }
+        // If server includes a status, enforce VERIFIED-only
+        const status: string | undefined = (data?.status ?? data?.accountStatus) as any
+        if (status && String(status).toUpperCase() !== 'VERIFIED') {
+          this.error = 'Your account is not verified yet. Please verify your email to log in.'
+          throw new Error(this.error)
+        }
         this.user = { id: userId, email }
+        // Persist to localStorage
+        localStorage.setItem('auth_user', JSON.stringify(this.user))
         this.info = 'Logged in successfully.'
       } catch (err: any) {
         const msg = err?.response?.data?.error || err?.message || 'Login failed'
-        this.error = msg
+        // Normalize generic backend message to concise copy where appropriate
+        if (/invalid\s+credentials/i.test(msg)) {
+          this.error = 'Invalid credentials'
+        } else {
+          this.error = msg
+        }
         throw err
       } finally {
         this.loading = false
       }
     },
-    async signup(firstName: string, lastName: string, email: string, password: string) {
+    async signup(email: string, password: string, firstName: string, lastName: string) {
       this.loading = true
       this.resetMessages()
       try {
@@ -61,6 +103,8 @@ export const useAuthStore = defineStore('auth', {
         }
 
         this.user = { id: userId, email, firstName, lastName }
+        // Persist to localStorage
+        localStorage.setItem('auth_user', JSON.stringify(this.user))
         this.info = 'Account created. Please check your email for a verification code.'
       } catch (err: any) {
         const msg = err?.response?.data?.error || err?.message || 'Sign up failed'
@@ -120,6 +164,7 @@ export const useAuthStore = defineStore('auth', {
     },
     logout() {
       this.user = null
+      localStorage.removeItem('auth_user')
       this.info = 'Logged out'
     },
   },

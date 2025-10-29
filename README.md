@@ -1,11 +1,18 @@
 # LendMIT-frontend
 
 ## User Journey
-Jenna got invited to a pink-and-white themed high tea party with a formal dress code. She realizes that she has nothing pink-and-white to wear, so she decides to try out LendMIT which she has heard good things about from her peers. She signs up for an account, verifies her MIT email, and then enters the MatchBoard page.
+Jenna wants to bake some banana bread for her boyfriend's birthday that is coming up, but she doesn't have a banana bread pan to bake it in. She doesn't want to spend money on something that she may only use once since she isn't a baker, so she tries out LendMIT. She first creates an account, verifies her MIT email, and successfully lands on the MatchBoard page. After searching through the current posts, she only finds one titled "Variety of Baking Supplies" that may be relevant. Since it's so vague, she contacts the lender for more information by clicking into the post and clicking the "Contact to borrow" button which takes her directly to Outlook with a template email that Jenna customizes.
 
-She searches up "dress" in the search bar and looks through all the postings. She doesn't find any dresses that fit her criteria, so she wants to create a post. Before doing so, she updates her profile with a profile picture and bio in case anyone checks out her profile. She then goes to the "My Postings" page to create a post. She titles it "Looking for a Pink or White Formal Dress (size 0-2)", selects her role as a "borrower", tags her post under the "Clothing & Costumes" category, and adds in a short description. It now shows up in her "My Postings" page and on the top of the "MatchBoard" page.
+While she waits for a response, Jenna navigates to the My Postings page to create her own post filling in the following details:
 
-Further, she goes onto the "Subscriptions" page to subscribe to the "Clothing & Costumes" category, so she'll get notified about future postings in this category. She logs out, and waits for people to see her post.
+    - Title: "Banana Bread Pan"
+    - Intent: "BORROW"
+    - Set End time: "12/06/2025"
+    - Category: "Home & Dorm"
+    - Description: "just need it for one day!"
+
+She creates the post and checks that it does show up on the top of the MatchBoard page. She then goes into the Profile page to upload a profile picture and add a bio to appear more friendly in case any lenders check her profile. Finally, she goes into the Subscriptions page to subscribe to the "Home & Dorm" category to get notifications for relevant postings that may potentially be a banana bread pan. She then logs out and waits for people to see her post and reach out.
+
 
 ### Screen recording of walkthrough:
-[Screen recording of user journey walkthrough](assets/user-journey-walkthrough.mov)
+[Screen recording of user journey walkthrough](assets/final-user-journey.mov)

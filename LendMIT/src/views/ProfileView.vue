@@ -190,141 +190,188 @@ async function saveBio() {
   <div>
     <NavBar @toggle-notifications="showDrawer = !showDrawer" />
     <NotificationsDrawer :open="showDrawer" @close="showDrawer = false" />
-    <main style="padding: 1rem 1.25rem">
-      <h1 style="margin: 0 0 1rem">Your Profile</h1>
+    <main class="wrap">
+      <h1 class="page-title">Your Profile</h1>
 
-      <p v-if="!auth.user" style="color: #b00020">Please log in to view your profile.</p>
-      <p v-if="error" style="color: #b00020">{{ error }}</p>
-      <p v-if="info" style="color: #385898">{{ info }}</p>
-      <p v-if="loading">Loading…</p>
+      <p v-if="!auth.user" class="text-error">Please log in to view your profile.</p>
+      <p v-if="error" class="text-error">{{ error }}</p>
+      <p v-if="info" class="info">{{ info }}</p>
+      <p v-if="loading" class="muted">Loading…</p>
 
-      <section v-if="auth.user && !loading && !error">
-        <div style="display: grid; gap: 0.75rem; max-width: 620px">
-          <div style="display: flex; gap: 1rem; align-items: center">
-            <div
-              class="avatar"
-              :style="thumbnail ? { backgroundImage: `url(${thumbnail})` } : {}"
-              @click="requestFilePick"
-              @dragover="onDragOver"
-              @drop="onDrop"
-              title="Drop an image or click to upload"
-            >
-              <span v-if="!thumbnail" class="avatar__placeholder">Add photo</span>
-            </div>
-            <div>
-              <div><strong>Name:</strong> {{ displayName || '(not set)' }}</div>
-              <div><strong>Email:</strong> {{ auth.user.email }}</div>
+      <section v-if="auth.user && !loading && !error" class="card">
+        <div class="header">
+          <div
+            class="avatar"
+            :style="thumbnail ? { backgroundImage: `url(${thumbnail})` } : {}"
+            @click="requestFilePick"
+            @dragover="onDragOver"
+            @drop="onDrop"
+            title="Drop an image or click to upload"
+          >
+            <span v-if="!thumbnail" class="avatar__placeholder">Add photo</span>
+            <span class="avatar__overlay">Upload</span>
+          </div>
+          <div class="identity">
+            <div class="name">{{ displayName || '(not set)' }}</div>
+            <div class="email muted">{{ auth.user.email }}</div>
+          </div>
+        </div>
+
+        <input
+          ref="pickingFile"
+          type="file"
+          accept="image/*"
+          class="hidden-input"
+          @change="onFileInputChange"
+        />
+
+        <section class="bio">
+          <div class="bio-title">
+            <h3>Bio</h3>
+            <button v-if="!isEditingBio" type="button" @click="startEditingBio">Edit</button>
+          </div>
+          <div v-if="!isEditingBio" class="bio-display">
+            {{ bio || 'No bio yet.' }}
+          </div>
+          <div v-else class="bio-edit">
+            <textarea
+              v-model="bioEdit"
+              placeholder="Tell others a bit about you"
+              rows="4"
+            ></textarea>
+            <div class="actions">
+              <button :disabled="saving" @click="saveBio" class="primary">
+                {{ saving ? 'Saving…' : 'Save bio' }}
+              </button>
+              <button :disabled="saving" @click="cancelEditingBio">Cancel</button>
             </div>
           </div>
-
-          <input
-            ref="pickingFile"
-            type="file"
-            accept="image/*"
-            style="display: none"
-            @change="onFileInputChange"
-          />
-
-          <section style="display: grid; gap: 0.25rem">
-            <div
-              style="
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 0.5rem;
-              "
-            >
-              <span><strong>Bio</strong></span>
-              <button
-                v-if="!isEditingBio"
-                type="button"
-                @click="startEditingBio"
-                style="
-                  background: white;
-                  border: 1px solid #e1e1ea;
-                  border-radius: 8px;
-                  padding: 0.25rem 0.5rem;
-                  cursor: pointer;
-                "
-              >
-                Edit
-              </button>
-            </div>
-
-            <div
-              v-if="!isEditingBio"
-              style="
-                color: #333;
-                white-space: pre-wrap;
-                border: 1px solid #f0f0f5;
-                border-radius: 8px;
-                padding: 0.5rem;
-              "
-            >
-              {{ bio || 'No bio yet.' }}
-            </div>
-
-            <div v-else style="display: grid; gap: 0.5rem">
-              <textarea
-                v-model="bioEdit"
-                placeholder="Tell others a bit about you"
-                rows="4"
-              ></textarea>
-              <div style="display: flex; gap: 0.5rem">
-                <button
-                  :disabled="saving"
-                  @click="saveBio"
-                  style="
-                    background: #2a7dfb;
-                    color: #fff;
-                    border: none;
-                    border-radius: 8px;
-                    padding: 0.4rem 0.6rem;
-                    cursor: pointer;
-                  "
-                >
-                  {{ saving ? 'Saving…' : 'Save bio' }}
-                </button>
-                <button
-                  :disabled="saving"
-                  @click="cancelEditingBio"
-                  style="
-                    background: white;
-                    color: #333;
-                    border: 1px solid #e1e1ea;
-                    border-radius: 8px;
-                    padding: 0.4rem 0.6rem;
-                    cursor: pointer;
-                  "
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </section>
-        </div>
+        </section>
       </section>
     </main>
   </div>
 </template>
 
 <style scoped>
+.wrap {
+  padding: 1.25rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.page-title {
+  margin: 0 0 1rem;
+}
+.muted {
+  color: var(--color-text-secondary);
+}
+.info {
+  color: var(--color-accent-2);
+}
+.card {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-4);
+  box-shadow: var(--shadow-1);
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+.header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: center;
+}
 .avatar {
-  width: 88px;
-  height: 88px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
-  border: 1px dashed #c9c9d3;
-  background-color: #fafafd;
+  border: 1px dashed var(--color-border);
+  background-color: var(--color-popup);
   background-size: cover;
   background-position: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #666;
+  color: var(--color-text-secondary);
   cursor: pointer;
   user-select: none;
+  transition:
+    box-shadow var(--dur-med) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+.avatar:hover {
+  box-shadow: var(--ring);
+  border-color: var(--color-accent-2);
 }
 .avatar__placeholder {
   font-size: 12px;
+}
+.avatar__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(62, 0, 107, 0.76);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+  pointer-events: none; /* allow click-through to avatar */
+  text-transform: uppercase;
+}
+.avatar:hover .avatar__overlay {
+  opacity: 1;
+}
+.identity .name {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+.identity .email {
+  font-size: 1.05rem;
+}
+.hidden-input {
+  display: none;
+}
+
+.bio {
+  display: grid;
+  gap: 0.5rem;
+}
+.bio-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.bio-display {
+  white-space: pre-wrap;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2);
+  padding: 0.6rem 0.75rem;
+  background: #fff;
+}
+.bio-edit {
+  display: grid;
+  gap: 0.5rem;
+}
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 520px) {
+  .header {
+    grid-template-columns: 1fr;
+  }
+  .avatar {
+    width: 80px;
+    height: 80px;
+  }
 }
 </style>

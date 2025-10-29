@@ -43,6 +43,39 @@
 
 ***
 
+### POST /api/UserAuthentication/getEmail
+
+**Description:** Retrieves the email address associated with a given user ID.
+
+**Requirements:**
+- A `UserAccount` entry for `user` exists.
+
+**Effects:**
+- Returns the `email` for the specified `user`.
+
+**Request Body:**
+```json
+{
+  "user": "User"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "email": "String"
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
 ### POST /api/Following/unfollow
 
 **Description:** Terminates an existing following relationship where a specified follower stops following a specified followee.
@@ -1141,6 +1174,41 @@
 * This action serves as an event notification.
 * It explicitly changes no state within this concept.
 * Its occurrence signals to other concepts (via synchronization) that the resource's time-bound availability (as defined by its `availableUntil` property) has ended.
+
+**Request Body:**
+
+```json
+{
+  "resource": "string"
+}
+```
+
+**Success Response Body (Action):**
+
+```json
+{}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+***
+### POST /api/TimeBoundedResource/deleteTimeWindow
+
+**Description:** Deletes the time window associated with a specified resource.
+
+**Requirements:**
+
+* A `TimeWindow` entry exists for `resource`.
+
+**Effects:**
+
+* Deletes the `TimeWindow` entry for the specified `resource`.
 
 **Request Body:**
 

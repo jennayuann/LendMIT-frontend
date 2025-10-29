@@ -48,31 +48,36 @@ function logout() {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #eee;
-  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 .brand {
-  font-weight: 800;
-  color: #2a7dfb;
-  letter-spacing: 0.5px;
+  font-weight: 900;
+  color: var(--color-accent-2);
+  letter-spacing: 0.2px;
+  font-size: 1.8rem; /* make it feel like the logo even more */
+  line-height: 1;
+  font-family: 'Neue Haas Grotesk Display', var(--font-sans);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.06); /* subtle weight/contrast boost */
 }
 .tabs {
   display: flex;
   gap: 1rem;
 }
 a {
-  color: #333;
+  color: var(--color-text-primary);
   text-decoration: none;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
+  font-weight: 700;
 }
 .active {
-  background: #e8f0fe;
-  color: #174ea6;
+  background: var(--color-popup);
+  color: var(--color-accent-2);
 }
 .right {
   display: flex;
@@ -81,14 +86,17 @@ a {
 }
 .bell,
 .logout {
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   background: #fff;
   border-radius: 6px;
-  padding: 0.25rem 0.5rem;
+  padding: 0.4rem 0.7rem;
   cursor: pointer;
+  font-weight: 700;
+  font-size: 0.95rem;
 }
 .user {
   font-size: 0.9rem;
-  color: #555;
+  color: var(--color-text-secondary);
+  font-weight: 700;
 }
 </style>
