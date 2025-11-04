@@ -6,6 +6,7 @@ import Modal from '../components/Modal.vue'
 import PostCard from '../components/PostCard.vue'
 import NotificationsDrawer from '../components/NotificationsDrawer.vue'
 import { api } from '../api/axiosInstance'
+import { useRoute } from 'vue-router'
 
 type Post = {
   id: string
@@ -38,6 +39,7 @@ const ownerProfile = ref<{
 } | null>(null)
 const activeRequest = ref<symbol | null>(null)
 const auth = useAuthStore()
+const route = useRoute()
 
 function normalizeResourceId(entry: any): string | null {
   if (!entry) return null
@@ -110,10 +112,18 @@ const contactActionLabel = computed(() => {
   return 'Contact'
 })
 
+function isExpired(p: Post): boolean {
+  if (!p.until) return false
+  const untilMs = new Date(p.until).getTime()
+  if (Number.isNaN(untilMs)) return false
+  return untilMs <= Date.now()
+}
+
 const filtered = computed(() => {
   const term = q.value.trim().toLowerCase()
   const list = posts.value
     .slice()
+    .filter((p) => !isExpired(p))
     .sort((a, b) => deriveEpochMsFromId(b.id) - deriveEpochMsFromId(a.id))
   if (!term) return list
   return list.filter((p) => `${p.title} ${p.description}`.toLowerCase().includes(term))
@@ -444,6 +454,17 @@ watch(
   { immediate: true },
 )
 
+// Deep-link: open details if URL contains ?post=<id>
+watch(
+  () => route.query.post,
+  async (val) => {
+    const id = typeof val === 'string' ? val.trim() : ''
+    if (!id) return
+    await openDetailsById(id)
+  },
+  { immediate: true },
+)
+
 // Heuristic to derive creation time from IDs (UUIDv7/ObjectId/ULID-like)
 function deriveEpochMsFromId(id: string): number {
   // UUIDv7: first 12 hex chars (48 bits) are timestamp in ms
@@ -579,6 +600,20 @@ async function resolveOwnerProfile(
 function openDetails(p: Post) {
   selected.value = p
   showDetails.value = true
+}
+
+async function openDetailsById(resourceId: string) {
+  try {
+    const fromList = posts.value.find((p) => p.id === resourceId)
+    if (fromList) {
+      openDetails(fromList)
+      return
+    }
+    const fetched = await fetchByIds([resourceId])
+    if (!fetched.length) return
+    const enriched = await withOwnerNames(await attachTimeWindows(await attachIntents(fetched)))
+    if (enriched.length && enriched[0]) openDetails(enriched[0] as Post)
+  } catch (_) {}
 }
 
 async function fetchOwnerContact(

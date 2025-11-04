@@ -59,7 +59,7 @@ async function removeSub(id: string) {
       <h3>Following</h3>
       <ul class="list">
         <li v-for="id in subs.followees" :key="id" class="row">
-          <span class="mono">{{ CATEGORIES.includes(id as any) ? id + ' (category)' : id }}</span>
+          <span class="mono">{{ id }}</span>
           <button class="danger" :disabled="subs.loading" @click="removeSub(id)">
             Unsubscribe
           </button>

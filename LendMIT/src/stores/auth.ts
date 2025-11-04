@@ -82,9 +82,29 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.resetMessages()
       try {
+        const normalized = String(email || '')
+          .trim()
+          .toLowerCase()
+        const mitOnly = /^[A-Za-z0-9._%+-]+@mit\.edu$/i
+        if (!mitOnly.test(normalized)) {
+          this.error = 'Email must be an @mit.edu address.'
+          throw new Error(this.error)
+        }
         // 1) Create the auth user (status likely UNVERIFIED per spec)
-        const reg = await api.post('/UserAuthentication/registerUser', { email, password })
+        const reg = await api.post('/UserAuthentication/registerUser', {
+          email: normalized,
+          password,
+        })
+        const apiError: string | undefined = reg?.data?.error
+        if (apiError) {
+          this.error = apiError
+          throw new Error(apiError)
+        }
         const userId = reg.data?.user as string
+        if (!userId || typeof userId !== 'string') {
+          this.error = 'Sign up failed'
+          throw new Error(this.error)
+        }
 
         // 2) Create the user profile with names
         await api.post('/UserProfile/createProfile', {
@@ -97,12 +117,15 @@ export const useAuthStore = defineStore('auth', {
 
         // 3) Optionally send a verification code so they can verify later
         try {
-          await api.post('/UserAuthentication/sendVerificationCode', { user: userId, email })
+          await api.post('/UserAuthentication/sendVerificationCode', {
+            user: userId,
+            email: normalized,
+          })
         } catch (_) {
           // Non-fatal for initial signup UX
         }
 
-        this.user = { id: userId, email, firstName, lastName }
+        this.user = { id: userId, email: normalized, firstName, lastName }
         // Persist to localStorage
         localStorage.setItem('auth_user', JSON.stringify(this.user))
         this.info = 'Account created. Please check your email for a verification code.'
