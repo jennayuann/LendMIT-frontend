@@ -35,8 +35,7 @@ async function fetchResourcesByIds(ids: string[]): Promise<Res[]> {
           const gr = await api.post('/Resource/getResource', { resourceID: id })
           r = gr.data?.resource
         } catch (_) {
-          const gr2 = await api.post('/ResourceConcept/getResource', { resourceID: id })
-          r = gr2.data?.resource
+          r = null
         }
         if (r && r.id) {
           const ownerId =
@@ -71,8 +70,7 @@ async function tryListByOwner(ownerId: string): Promise<Res[] | null> {
       const resp = await api.post('/Resource/listResourcesByOwner', { owner: ownerId })
       data = resp.data
     } catch (_) {
-      const resp2 = await api.post('/ResourceConcept/listResourcesByOwner', { owner: ownerId })
-      data = resp2.data
+      data = null
     }
     if (Array.isArray(data)) {
       if (data.length && typeof data[0] === 'string')
@@ -144,8 +142,7 @@ async function tryListAllAndFilter(ownerId: string): Promise<Res[] | null> {
       const resp = await api.post('/Resource/listResources', {})
       data = resp.data
     } catch (_) {
-      const resp2 = await api.post('/ResourceConcept/listResources', {})
-      data = resp2.data
+      data = null
     }
     let list: Res[] | null = null
     if (Array.isArray(data)) {
@@ -236,14 +233,7 @@ async function load(showSpinner = true) {
           if (Array.isArray(resp.data) && resp.data.length) intents = resp.data as string[]
           else if (Array.isArray(resp.data?.intentNames))
             intents = resp.data.intentNames as string[]
-        } catch (_) {
-          try {
-            const resp2 = await api.post('/ResourceIntentConcept/listIntents', {})
-            if (Array.isArray(resp2.data) && resp2.data.length) intents = resp2.data as string[]
-            else if (Array.isArray(resp2.data?.intentNames))
-              intents = resp2.data.intentNames as string[]
-          } catch (_) {}
-        }
+        } catch (_) {}
         if (!intents.length) intents = ['LEND', 'BORROW']
         // Ensure defaults exist server-side so setIntent/listResourcesByIntent work
         for (const def of ['LEND', 'BORROW']) {
@@ -261,17 +251,9 @@ async function load(showSpinner = true) {
         const idSets = await Promise.all(
           intents.map(async (it) => {
             try {
-              try {
-                const r = await api.post('/ResourceIntent/listResourcesByIntent', { intent: it })
-                if (Array.isArray(r.data)) return r.data as string[]
-                if (Array.isArray(r.data?.resourceIDs)) return r.data.resourceIDs as string[]
-              } catch (_) {
-                const r2 = await api.post('/ResourceIntentConcept/listResourcesByIntent', {
-                  intent: it,
-                })
-                if (Array.isArray(r2.data)) return r2.data as string[]
-                if (Array.isArray(r2.data?.resourceIDs)) return r2.data.resourceIDs as string[]
-              }
+              const r = await api.post('/ResourceIntent/listResourcesByIntent', { intent: it })
+              if (Array.isArray(r.data)) return r.data as string[]
+              if (Array.isArray(r.data?.resourceIDs)) return r.data.resourceIDs as string[]
             } catch (_) {}
             return [] as string[]
           }),
@@ -323,11 +305,7 @@ async function delPost(p: Res) {
 
     // 1.5 Delete associated TimeBoundedResource entry (API spec)
     try {
-      try {
-        await api.post('/TimeBoundedResource/deleteTimeWindow', { resource: resourceID })
-      } catch (_) {
-        await api.post('/TimeBoundedResourceConcept/deleteTimeWindow', { resource: resourceID })
-      }
+      await api.post('/TimeBoundedResource/deleteTimeWindow', { resource: resourceID })
     } catch (e) {
       console.debug('Could not delete time window (may not exist):', e)
     }
@@ -417,14 +395,8 @@ async function attachIntents(list: Res[]): Promise<Res[]> {
 
 async function getIntentFor(resourceId: string): Promise<string | null> {
   try {
-    let data: any
-    try {
-      const resp = await api.post('/ResourceIntent/getIntent', { resource: resourceId })
-      data = resp.data
-    } catch (_) {
-      const resp2 = await api.post('/ResourceIntentConcept/getIntent', { resource: resourceId })
-      data = resp2.data
-    }
+    const resp = await api.post('/ResourceIntent/getIntent', { resource: resourceId })
+    const data: any = resp.data
     if (Array.isArray(data) && data.length) {
       const row = data[0]
       if (row && typeof row.intent === 'string') return row.intent
@@ -442,16 +414,8 @@ async function getTimeWindow(
   resourceId: string,
 ): Promise<{ from: string | null; until: string | null }> {
   try {
-    let data: any
-    try {
-      const r = await api.post('/TimeBoundedResource/getTimeWindow', { resource: resourceId })
-      data = r.data
-    } catch (_) {
-      const r2 = await api.post('/TimeBoundedResourceConcept/getTimeWindow', {
-        resource: resourceId,
-      })
-      data = r2.data
-    }
+    const r = await api.post('/TimeBoundedResource/getTimeWindow', { resource: resourceId })
+    const data: any = r.data
     let entry: any = null
     if (Array.isArray(data) && data.length) entry = data[0]
     else if (data && typeof data === 'object') entry = data

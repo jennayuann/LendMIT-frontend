@@ -8,3 +8,22 @@ export const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
 })
+
+// Attach the authenticated user id (if present) to every request for backend authorization checks
+api.interceptors.request.use((config) => {
+  try {
+    const raw = localStorage.getItem('auth_user')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      const id = typeof parsed?.id === 'string' ? parsed.id : null
+      if (id && id.trim().length > 0) {
+        // Use a simple custom header to pass the user id to the backend
+        config.headers = config.headers || {}
+        ;(config.headers as any)['X-Auth-User'] = id
+      }
+    }
+  } catch (_) {
+    // ignore failures to read localStorage or parse JSON
+  }
+  return config
+})

@@ -8,7 +8,7 @@ npm run dev
 ## Note:
 For testing purposes, feel free to use the following login to the application (same one created in user journey walkthrough video):
 
-- Email: jenna@mit.edu
+- Email: jnnayuan@mit.edu
 - Password: jenna
 
 

@@ -828,14 +828,8 @@ async function attachIntents(list: Post[]): Promise<Post[]> {
 
 async function getIntentFor(resourceId: string): Promise<string | null> {
   try {
-    let data: any
-    try {
-      const resp = await api.post('/ResourceIntent/getIntent', { resource: resourceId })
-      data = resp.data
-    } catch (_) {
-      const resp2 = await api.post('/ResourceIntentConcept/getIntent', { resource: resourceId })
-      data = resp2.data
-    }
+    const resp = await api.post('/ResourceIntent/getIntent', { resource: resourceId })
+    const data: any = resp.data
     if (Array.isArray(data) && data.length) {
       const row = data[0]
       if (row && typeof row.intent === 'string') return row.intent
@@ -853,16 +847,8 @@ async function getTimeWindow(
   resourceId: string,
 ): Promise<{ from: string | null; until: string | null }> {
   try {
-    let data: any
-    try {
-      const r = await api.post('/TimeBoundedResource/getTimeWindow', { resource: resourceId })
-      data = r.data
-    } catch (_) {
-      const r2 = await api.post('/TimeBoundedResourceConcept/getTimeWindow', {
-        resource: resourceId,
-      })
-      data = r2.data
-    }
+    const r = await api.post('/TimeBoundedResource/getTimeWindow', { resource: resourceId })
+    const data: any = r.data
     let entry: any = null
     if (Array.isArray(data) && data.length) entry = data[0]
     else if (data && typeof data === 'object') entry = data

@@ -62,14 +62,8 @@ const timeError = ref<string | null>(null)
 
 async function loadIntents() {
   try {
-    let data: any
-    try {
-      const res = await api.post('/ResourceIntent/listIntents', {})
-      data = res.data
-    } catch (_) {
-      const res2 = await api.post('/ResourceIntentConcept/listIntents', {})
-      data = res2.data
-    }
+    const res = await api.post('/ResourceIntent/listIntents', {})
+    const data: any = res.data
     if (Array.isArray(data) && data.length > 0) availableIntents.value = data
     else if (Array.isArray(data?.intentNames) && data.intentNames.length > 0)
       availableIntents.value = data.intentNames
@@ -144,13 +138,9 @@ function localPartsToISO(
 
 async function loadTimeWindow(resourceId: string) {
   try {
-    let data: any
-    try {
-      data = (await api.post('/TimeBoundedResource/getTimeWindow', { resource: resourceId })).data
-    } catch (_) {
-      data = (await api.post('/TimeBoundedResourceConcept/getTimeWindow', { resource: resourceId }))
-        .data
-    }
+    const data: any = (
+      await api.post('/TimeBoundedResource/getTimeWindow', { resource: resourceId })
+    ).data
     let entry: any = null
     if (Array.isArray(data) && data.length) entry = data[0]
     else if (data && typeof data === 'object') entry = data
@@ -207,52 +197,19 @@ async function loadTimeWindow(resourceId: string) {
 }
 
 async function ensureIntentDefined(name: string) {
-  const variants = [{ intentName: name }, { name }]
-  // Try both route families with both body shapes
-  for (const body of variants) {
-    try {
-      await api.post('/ResourceIntent/defineIntent', body)
-      return
-    } catch (e: any) {
-      const status = e?.response?.status
-      // If defined already, we're fine
-      if (status === 409 || status === 400) {
-        // Continue to concept route just in case, but treat as ok if one succeeds
-      }
-      try {
-        await api.post('/ResourceIntentConcept/defineIntent', body)
-        return
-      } catch (_) {
-        // continue loop to next variant
-      }
-    }
+  const body = { intentName: name }
+  try {
+    await api.post('/ResourceIntent/defineIntent', body)
+  } catch (_) {
+    // Ignore; intents are usually pre-defined, and define may be idempotent or restricted
   }
 }
 
 async function setIntentForResource(resourceId: string, intentName: string) {
-  const bodies = [
-    { resource: resourceId, intent: intentName },
-    { resourceID: resourceId, intent: intentName },
-    { resource: resourceId, intentName: intentName },
-    { resourceID: resourceId, intentName: intentName },
-  ]
-  // Try both route families with body variants; log first meaningful error
-  let lastErr: any = null
-  for (const body of bodies) {
-    try {
-      await api.post('/ResourceIntent/setIntent', body)
-      return
-    } catch (e1: any) {
-      lastErr = e1
-      try {
-        await api.post('/ResourceIntentConcept/setIntent', body)
-        return
-      } catch (e2: any) {
-        lastErr = e2
-      }
-    }
-  }
-  if (lastErr) {
+  const body = { resource: resourceId, intent: intentName }
+  try {
+    await api.post('/ResourceIntent/setIntent', body)
+  } catch (lastErr: any) {
     const resp = lastErr?.response
     console.error('setIntent failed', {
       resourceId,
@@ -266,12 +223,7 @@ async function setIntentForResource(resourceId: string, intentName: string) {
 
 async function getIntentForResource(resourceId: string): Promise<string | null> {
   try {
-    let data: any
-    try {
-      data = (await api.post('/ResourceIntent/getIntent', { resource: resourceId })).data
-    } catch (_) {
-      data = (await api.post('/ResourceIntentConcept/getIntent', { resource: resourceId })).data
-    }
+    const data: any = (await api.post('/ResourceIntent/getIntent', { resource: resourceId })).data
     if (Array.isArray(data) && data.length) {
       const row = data[0]
       if (row && typeof row.intent === 'string') return row.intent
@@ -312,14 +264,8 @@ watch(
       const id = p.id
       ;(async () => {
         try {
-          let data: any
-          try {
-            const r1 = await api.post('/ResourceIntent/getIntent', { resource: id })
-            data = r1.data
-          } catch (_) {
-            const r2 = await api.post('/ResourceIntentConcept/getIntent', { resource: id })
-            data = r2.data
-          }
+          const r1 = await api.post('/ResourceIntent/getIntent', { resource: id })
+          const data: any = r1.data
           const it = (data && (data.intent || data?.[0]?.intent)) as string | undefined
           if (it && typeof it === 'string') intent.value = it
         } catch (_) {}
@@ -426,15 +372,8 @@ async function save() {
       body.availableFrom = startISO
       body.availableUntil = endISO
       await api.post('/TimeBoundedResource/defineTimeWindow', body)
-    } catch (_) {
-      try {
-        const body: any = { resource: props.post.id }
-        body.availableFrom = startISO
-        body.availableUntil = endISO
-        await api.post('/TimeBoundedResourceConcept/defineTimeWindow', body)
-      } catch (e2) {
-        console.warn('defineTimeWindow failed', e2)
-      }
+    } catch (e2) {
+      console.warn('defineTimeWindow failed', e2)
     }
     const updated = {
       id: props.post.id,
@@ -508,15 +447,8 @@ async function save() {
         body.availableFrom = startISO
         body.availableUntil = endISO
         await api.post('/TimeBoundedResource/defineTimeWindow', body)
-      } catch (_) {
-        try {
-          const body: any = { resource: resourceID }
-          body.availableFrom = startISO
-          body.availableUntil = endISO
-          await api.post('/TimeBoundedResourceConcept/defineTimeWindow', body)
-        } catch (e2) {
-          console.warn('defineTimeWindow (create) failed', e2)
-        }
+      } catch (e2) {
+        console.warn('defineTimeWindow (create) failed', e2)
       }
       const created = {
         id: resourceID,
